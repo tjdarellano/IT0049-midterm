@@ -25,12 +25,21 @@ jobs:
           rm -rf deploy
           mkdir -p deploy/htdocs
 
-          cp -R app deploy/app
-          cp -R system deploy/system
-          cp -R writable deploy/writable
+          cp -R app deploy/htdocs/app
+          cp -R system deploy/htdocs/system
+          cp -R writable deploy/htdocs/writable
           cp -R public/. deploy/htdocs/
 
-          cat > deploy/.env <<EOF
+          sed -i "s#FCPATH . '../app/Config/Paths.php'#FCPATH . 'app/Config/Paths.php'#" deploy/htdocs/index.php
+
+          sed -i \
+            -e "s#../../system#../system#g" \
+            -e "s#../../writable#../writable#g" \
+            -e "s#../../tests#../tests#g" \
+            -e "s#../../'#../'#g" \
+            deploy/htdocs/app/Config/Paths.php
+
+          cat > deploy/htdocs/.env <<EOF
           CI_ENVIRONMENT = production
           app.baseURL = '${APP_BASE_URL}'
           database.default.hostname = '${DB_HOST}'
