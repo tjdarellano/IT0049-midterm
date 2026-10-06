@@ -32,13 +32,6 @@ jobs:
 
           sed -i "s#FCPATH . '../app/Config/Paths.php'#FCPATH . 'app/Config/Paths.php'#" deploy/htdocs/index.php
 
-          sed -i \
-            -e "s#../../system#../system#g" \
-            -e "s#../../writable#../writable#g" \
-            -e "s#../../tests#../tests#g" \
-            -e "s#../../'#../'#g" \
-            deploy/htdocs/app/Config/Paths.php
-
           cat > deploy/htdocs/.env <<EOF
           CI_ENVIRONMENT = production
           app.baseURL = '${APP_BASE_URL}'
