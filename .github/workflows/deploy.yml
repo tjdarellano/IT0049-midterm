@@ -1,0 +1,63 @@
+name: Deploy POS to InfinityFree
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Prepare CodeIgniter files
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          rm -rf deploy
+          mkdir -p deploy/htdocs
+
+          cp -R app deploy/app
+          cp -R system deploy/system
+          cp -R writable deploy/writable
+          cp -R public/. deploy/htdocs/
+
+          cat > deploy/.env <<EOF
+          CI_ENVIRONMENT = production
+          app.baseURL = '${APP_BASE_URL}'
+          database.default.hostname = '${DB_HOST}'
+          database.default.database = '${DB_NAME}'
+          database.default.username = '${DB_USER}'
+          database.default.password = '${DB_PASSWORD}'
+          database.default.DBDriver = MySQLi
+          database.default.DBPrefix =
+          database.default.port = 3306
+          EOF
+
+      - name: Upload to InfinityFree
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          local-dir: ./deploy/
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            database.sql
+            tests/**
+            composer.json
+            README.md
+            spark
+            **/.ftp-deploy-sync-state.json
